@@ -1,0 +1,11 @@
+-- Eliminar columnas
+ALTER TABLE usuarios
+DROP COLUMN edad;
+
+-- Renombrar una tabla
+ALTER TABLE clientes
+RENAME TO clientes_activos;
+
+-- Elimina la restricción de llave foránea
+ALTER TABLE pedidos
+DROP CONSTRAINT fk_cliente_id;
