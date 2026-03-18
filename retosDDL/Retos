@@ -1,0 +1,54 @@
+# Reto 1:
+
+create database tienda;
+use tienda;
+
+# Reto 2:
+
+create table productos(
+idProducto int auto_increment primary key,
+nomProd varchar (20) not null,
+precio decimal(10,2) not null,
+stock int default 0,
+fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+;
+describe productos;
+
+# Reto 3:
+
+create table clientes(
+idCliente int auto_increment primary key,
+nombreCliente varchar (50),
+emailCliente varchar (100) unique not null,
+telefonoCliente varchar (20)
+);
+
+create table pedidos(
+idPedido int not null,
+idClienteFK int,
+fechaPedido datetime,
+totalPedido decimal (10,2)
+);
+
+alter table pedidos 
+add constraint clienteFK foreign key (idClienteFK)
+references clientes(idCliente)
+ON DELETE CASCADE
+ON UPDATE CASCADE;
+
+# Reto 4:
+
+alter table productos add categoria varchar (50);
+
+describe productos;
+
+alter table clientes modify column telefonoCliente varchar (15);
+
+alter table pedidos change totalPedido monto_Total decimal (10,2);
+
+alter table productos drop column fecha_creacion;
+
+describe productos;
+describe pedidos;
+describe clientes;
