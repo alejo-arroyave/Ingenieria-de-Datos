@@ -1,0 +1,28 @@
+--- TIPOS DE CARACTERES ---
+
+TINYINT 
+SMALLINT
+MEDIUMINT
+INT o INTEGER 
+BIGINT
+
+DECIMAL(M,D)
+FLOAT 
+DOUBLE
+
+CHAR (n) -- Tamaño fijo
+VARCHAR (n)/Varchar2 (n) -- Tamaño variable
+
+
+--- ROLLBACK EN SQL ---
+START TRANSACTION;
+
+DELETE FROM tabla WHERE condicion;
+
+ROLLBACK;  -- esto deshace el DELETE
+
+Puedes usar ROLLBACK solo si la eliminación (DELETE) ocurrió dentro de una transacción.
+No se puede hacer ROLLBACK si:
+  No se usaron transacciones (autocommit)
+  SET AUTOCOMMIT = 0;
+
