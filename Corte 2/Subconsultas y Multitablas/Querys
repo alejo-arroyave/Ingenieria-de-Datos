@@ -1,0 +1,36 @@
+### Consulta Multitabla
+
+select columna1, columna2
+from tabla1 t1
+join tabla2 t2 on t1.campoRelacion = t2.campoRelacion;
+
+select columna1, columna2
+from tabla1 t1
+join tabla2 t2 on t1.campoRelacion = t2.campoRelacion
+join tabla3 t3 on t1.otroCampoRelacion = t3.otroCampoRelacion;
+where condicion;
+
+### Subconsulta
+
+select columna
+from tabla
+where campo in (
+    select campo
+    from otra_tabla
+);
+
+
+select *
+from (
+    select columna1, columna2
+    from tabla
+) as subconsulta;
+
+### Pasar datos de CSV a Tabla
+
+LOAD DATA INFILE 'ruta/archivo.csv'
+INTO TABLE nombre_tabla
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
