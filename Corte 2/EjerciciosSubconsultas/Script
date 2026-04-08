@@ -121,6 +121,9 @@ from
     group by depto_id) as promedios
 where prom_salario > 2800000.000000
 
+### Tarea 
+###Hacer consulta donde muestre el producto donde el precio supere el promedio del valor de los productos (mayor a menor)
+
 SELECT nombreProducto, precioProducto
 FROM productos
 WHERE precioProducto > (
