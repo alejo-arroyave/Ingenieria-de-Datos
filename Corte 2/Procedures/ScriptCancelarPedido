@@ -1,0 +1,213 @@
+create database empresa_db;
+
+use empresa_db;
+
+create table departamentos (
+  iddepto int primary key,
+  nombredepto varchar(50)
+);
+
+create table empleados (
+  idempleado int primary key,
+  nombreempleado varchar(50),
+  depto_id int,
+  salarioempleado decimal(10,2),
+  foreign key (depto_id) references departamentos(iddepto)
+);
+
+create table productos (
+  idproducto int primary key,
+  nombreproducto varchar(60),
+  precioproducto decimal(10,2),
+  categoriaproducto varchar(40)
+);
+
+create table clientes (
+    id_cliente int auto_increment primary key,
+    nombrecliente varchar(60) not null,
+    email varchar(80),
+    telefono varchar(20),
+    ciudad varchar(50)
+);
+
+insert into clientes (nombrecliente, email, telefono) values
+('ana torres', 'ana.torres@email.com', '3001234567'),
+('luis ramírez', 'luis.ramirez@email.com', '3012345678'),
+('sofía herrera', 'sofia.herrera@email.com', '3023456789'),
+('carlos mendoza', 'carlos.mendoza@email.com', '3034567890'),
+('valentina ríos', 'valentina.rios@email.com', '3045678901'),
+('jorge castro', 'jorge.castro@email.com', '3056789012'),
+('diana morales', 'diana.morales@email.com', '3067890123'),
+('andrés vargas', 'andres.vargas@email.com', '3078901234'),
+('camila lópez', 'camila.lopez@email.com', '3089012345'),
+('felipe gómez', 'felipe.gomez@email.com', '3090123456');
+
+insert into departamentos (iddepto, nombredepto) values
+(1, 'recursos humanos'),
+(2, 'tecnología'),
+(3, 'ventas'),
+(4, 'finanzas');
+
+insert into empleados (idempleado, nombreempleado, depto_id, salarioempleado) values
+(101, 'carlos pérez', 2, 3500000.00),
+(102, 'laura gómez', 1, 2800000.00),
+(103, 'andrés rodríguez', 3, 3000000.00),
+(104, 'maría lópez', 4, 4000000.00),
+(105, 'juan martínez', 2, 3700000.00);
+
+insert into productos (idproducto, nombreproducto, precioproducto, categoriaproducto) values
+(201, 'laptop lenovo', 2500000.00, 'tecnología'),
+(202, 'mouse inalámbrico', 80000.00, 'accesorios'),
+(203, 'teclado mecánico', 150000.00, 'accesorios'),
+(204, 'monitor 24 pulgadas', 700000.00, 'tecnología'),
+(205, 'silla ergonómica', 900000.00, 'oficina');
+
+select * from empleados;
+
+select nombreempleado, salarioempleado
+from empleados
+where salarioempleado > (select avg(salarioempleado) from empleados);
+
+select nombreempleado, salarioempleado
+from empleados
+where depto_id in (
+    select iddepto
+    from departamentos
+    where nombredepto in ('ventas','tecnología')
+);
+
+select depto_id, prom_salario
+from (
+    select depto_id, avg(salarioempleado) as prom_salario
+    from empleados
+    group by depto_id
+) as promedios
+where prom_salario > 2800000;
+
+select nombreproducto, precioproducto
+from productos
+where precioproducto > (
+    select avg(precioproducto)
+    from productos
+)
+order by precioproducto desc;
+
+create table pedido (
+    id_pedido int auto_increment primary key,
+    id_cliente int not null,
+    cliente varchar(50),
+    fecha_pedido datetime default now(),
+    estado enum('pedido','enviado','entregado','pagado'),
+    valorpedido decimal(10,2),
+    foreign key (id_cliente) references clientes(id_cliente)
+);
+
+create table detalle_pedido (
+    id_detalle int auto_increment primary key,
+    id_pedido int not null,
+    id_producto int not null,
+    cantidad int not null,
+    precio_unit decimal(10,2) not null,
+    foreign key (id_pedido) references pedido(id_pedido),
+    foreign key (id_producto) references productos(idproducto)
+);
+
+insert into pedido (id_cliente, cliente, fecha_pedido, estado, valorpedido) values
+(1, 'ana torres', now(), 'pedido', 2580000.00),
+(2, 'luis ramírez', now(), 'enviado', 80000.00),
+(3, 'sofía herrera', now(), 'entregado', 150000.00),
+(4, 'carlos mendoza', now(), 'pagado', 700000.00),
+(5, 'valentina ríos', now(), 'pedido', 900000.00),
+(6, 'jorge castro', now(), 'enviado', 2580000.00),
+(7, 'diana morales', now(), 'entregado', 780000.00);
+
+insert into detalle_pedido (id_pedido, id_producto, cantidad, precio_unit) values
+(1, 201, 1, 2500000.00),
+(1, 202, 1, 80000.00),
+(2, 202, 1, 80000.00),
+(3, 203, 1, 150000.00),
+(4, 204, 1, 700000.00),
+(5, 205, 1, 900000.00),
+(6, 201, 1, 2500000.00),
+(6, 202, 1, 80000.00),
+(7, 204, 1, 700000.00),
+(7, 203, 1, 80000.00);
+
+select * from pedido;
+select * from detalle_pedido;
+select * from clientes;
+
+select 
+    c.nombrecliente,
+    p.id_pedido,
+    p.fecha_pedido,
+    pr.nombreproducto,
+    dp.cantidad,
+    dp.precio_unit,
+    (dp.cantidad * dp.precio_unit) as total
+from pedido p
+join clientes c on p.id_cliente = c.id_cliente
+join detalle_pedido dp on p.id_pedido = dp.id_pedido
+join productos pr on dp.id_producto = pr.idproducto
+order by p.id_pedido asc;
+
+delimiter //
+
+create procedure cancelar_pedido(
+    in p_id_pedido int,
+    in p_id_cliente int,
+    out p_mensaje varchar(200)
+)
+begin
+
+    declare v_existe int;
+    declare v_estado varchar(20);
+
+    declare exit handler for sqlexception
+    begin
+        rollback;
+        set p_mensaje = 'error: transaccion cancelada';
+    end;
+
+    select count(*) into v_existe
+    from pedido
+    where id_pedido = p_id_pedido
+    and id_cliente = p_id_cliente;
+
+    if v_existe = 0 then
+        set p_mensaje = 'el pedido no existe o no pertenece al cliente';
+    else
+
+        select estado into v_estado
+        from pedido
+        where id_pedido = p_id_pedido;
+
+        if v_estado = 'cancelado' or v_estado = 'entregado' then
+            set p_mensaje = 'no se puede cancelar el pedido';
+        else
+
+            start transaction;
+
+            update pedido
+            set estado = 'cancelado'
+            where id_pedido = p_id_pedido;
+
+            update productos pr
+            join detalle_pedido dp on pr.idproducto = dp.id_producto
+            set pr.categoriaproducto = pr.categoriaproducto
+            where dp.id_pedido = p_id_pedido;
+
+            commit;
+
+            set p_mensaje = concat('pedido ', p_id_pedido, ' cancelado correctamente');
+
+        end if;
+
+    end if;
+
+end //
+
+delimiter ;
+
+call cancelar_pedido(1,1,@mensaje);
+select @mensaje;
