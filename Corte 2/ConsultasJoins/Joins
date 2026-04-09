@@ -1,365 +1,142 @@
- ##Subconsultas
-/*Consultas Anidadas SubQuery select 
-select col1,col2
-from tabla_Princial
-where columna operador
-	(select col1,col2
-	from tabla_Secundaria
-	where condicion); 
-Escalar devuelve  un único valor o fila o columna 
-de fila devuelve una sola fila con varias columnas ROw()
-de tabla devuelve varias filas y varias columnas
-correlacional
+create database empresa_db;
 
- 1. reto 1 crear tabla empleados (id,nombre,deptoId, salario), producto (id,nombre,precio,categoria),
- departamento(id,nombre)
- 2. Vamos a registrar 5 empleados 3 departamentos y 5 productos*/
+use empresa_db;
 
-CREATE DATABASE empresa_db;
-
-USE empresa_db;
-
--- Tabla: departamentos
-
-CREATE TABLE departamentos (
-
-  idDepto INT PRIMARY KEY,
-
-  nombreDepto VARCHAR(50)
-
+create table departamentos (
+  iddepto int primary key,
+  nombredepto varchar(50)
 );
 
--- Tabla: empleados
-
-CREATE TABLE empleados (
-
-  idEmpleado INT PRIMARY KEY,
-
-  nombreEmpleado VARCHAR(50),
-
-  depto_id INT,
-
-  salarioEmpleado DECIMAL(10,2),
-
-  FOREIGN KEY (depto_id) REFERENCES departamentos(idDepto)
-
+create table empleados (
+  idempleado int primary key,
+  nombreempleado varchar(50),
+  depto_id int,
+  salarioempleado decimal(10,2),
+  foreign key (depto_id) references departamentos(iddepto)
 );
 
--- Tabla: productos
-
-CREATE TABLE productos (
-
-  idProducto INT PRIMARY KEY,
-
-  nombreProducto VARCHAR(60),
-
-  precioProducto DECIMAL(10,2),
-
-  categoriaProducto VARCHAR(40)
-
+create table productos (
+  idproducto int primary key,
+  nombreproducto varchar(60),
+  precioproducto decimal(10,2),
+  categoriaproducto varchar(40)
 );
 
--- Tabla: clientes
-
-CREATE TABLE clientes (
-    id_cliente INT AUTO_INCREMENT PRIMARY KEY,
-    
-    nombreCliente VARCHAR(60) NOT NULL,
-    
-    email VARCHAR(80),
-    
-    telefono VARCHAR(20),
-    
-    ciudad VARCHAR (50)
+create table clientes (
+    id_cliente int auto_increment primary key,
+    nombrecliente varchar(60) not null,
+    email varchar(80),
+    telefono varchar(20),
+    ciudad varchar(50)
 );
 
-INSERT INTO clientes (nombreCliente, email, telefono) VALUES
-('Ana Torres', 'ana.torres@email.com', '3001234567'),
-('Luis Ramírez', 'luis.ramirez@email.com', '3012345678'),
-('Sofía Herrera', 'sofia.herrera@email.com', '3023456789'),
-('Carlos Mendoza', 'carlos.mendoza@email.com', '3034567890'),
-('Valentina Ríos', 'valentina.rios@email.com', '3045678901'),
-('Jorge Castro', 'jorge.castro@email.com', '3056789012'),
-('Diana Morales', 'diana.morales@email.com', '3067890123'),
-('Andrés Vargas', 'andres.vargas@email.com', '3078901234'),
-('Camila López', 'camila.lopez@email.com', '3089012345'),
-('Felipe Gómez', 'felipe.gomez@email.com', '3090123456');
- 
-INSERT INTO departamentos (idDepto, nombreDepto) VALUES
+insert into clientes (nombrecliente, email, telefono) values
+('ana torres', 'ana.torres@email.com', '3001234567'),
+('luis ramírez', 'luis.ramirez@email.com', '3012345678'),
+('sofía herrera', 'sofia.herrera@email.com', '3023456789'),
+('carlos mendoza', 'carlos.mendoza@email.com', '3034567890'),
+('valentina ríos', 'valentina.rios@email.com', '3045678901'),
+('jorge castro', 'jorge.castro@email.com', '3056789012'),
+('diana morales', 'diana.morales@email.com', '3067890123'),
+('andrés vargas', 'andres.vargas@email.com', '3078901234'),
+('camila lópez', 'camila.lopez@email.com', '3089012345'),
+('felipe gómez', 'felipe.gomez@email.com', '3090123456');
 
-(1, 'Recursos Humanos'),
+insert into departamentos (iddepto, nombredepto) values
+(1, 'recursos humanos'),
+(2, 'tecnología'),
+(3, 'ventas'),
+(4, 'finanzas');
 
-(2, 'Tecnología'),
+insert into empleados (idempleado, nombreempleado, depto_id, salarioempleado) values
+(101, 'carlos pérez', 2, 3500000.00),
+(102, 'laura gómez', 1, 2800000.00),
+(103, 'andrés rodríguez', 3, 3000000.00),
+(104, 'maría lópez', 4, 4000000.00),
+(105, 'juan martínez', 2, 3700000.00);
 
-(3, 'Ventas'),
+insert into productos (idproducto, nombreproducto, precioproducto, categoriaproducto) values
+(201, 'laptop lenovo', 2500000.00, 'tecnología'),
+(202, 'mouse inalámbrico', 80000.00, 'accesorios'),
+(203, 'teclado mecánico', 150000.00, 'accesorios'),
+(204, 'monitor 24 pulgadas', 700000.00, 'tecnología'),
+(205, 'silla ergonómica', 900000.00, 'oficina');
 
-(4, 'Finanzas');
- 
-INSERT INTO empleados (idEmpleado, nombreEmpleado, depto_id, salarioEmpleado) VALUES
+select * from empleados;
 
-(101, 'Carlos Pérez', 2, 3500000.00),
-
-(102, 'Laura Gómez', 1, 2800000.00),
-
-(103, 'Andrés Rodríguez', 3, 3000000.00),
-
-(104, 'María López', 4, 4000000.00),
-
-(105, 'Juan Martínez', 2, 3700000.00);
- 
-INSERT INTO productos (idProducto, nombreProducto, precioProducto, categoriaProducto) VALUES
-
-(201, 'Laptop Lenovo', 2500000.00, 'Tecnología'),
-
-(202, 'Mouse Inalámbrico', 80000.00, 'Accesorios'),
-
-(203, 'Teclado Mecánico', 150000.00, 'Accesorios'),
-
-(204, 'Monitor 24 pulgadas', 700000.00, 'Tecnología'),
-
-(205, 'Silla Ergonómica', 900000.00, 'Oficina');
-
-select*from empleados;
-
-
-/*Subconsultas*/
-###-----Where----
-select nombreEmpleado,salarioEmpleado 
+select nombreempleado, salarioempleado
 from empleados
-where salarioEmpleado>
-	(select AVG(salarioEmpleado)
-    from empleados);
-    
- ###-----Where+in----
-select nombreEmpleado,salarioEmpleado 
+where salarioempleado > (select avg(salarioempleado) from empleados);
+
+select nombreempleado, salarioempleado
 from empleados
-where depto_id in 
-	(select idDepto
+where depto_id in (
+    select iddepto
     from departamentos
-    where nombreDepto in ('Ventas','Tecnología'));
-   
-   
- ###-----tabla derivada----
-select depto_id,prom_salario
-from 
-	(select depto_id,AVG(salarioEmpleado)as prom_salario
-	from empleados
-    group by depto_id) as promedios
-where prom_salario > 2800000.000000;
+    where nombredepto in ('ventas','tecnología')
+);
 
-select nombreProducto, precioProducto
+select depto_id, prom_salario
+from (
+    select depto_id, avg(salarioempleado) as prom_salario
+    from empleados
+    group by depto_id
+) as promedios
+where prom_salario > 2800000;
+
+select nombreproducto, precioproducto
 from productos
-where precioProducto >
-	(
-    select avg(precioProducto)
-	from productos
-    )
-order by precioProducto desc;
-
-select * from productos;
-
- ##Subconsultas
-/*Consultas Anidadas SubQuery select 
-select col1,col2
-from tabla_Princial
-where columna operador
-	(select col1,col2
-	from tabla_Secundaria
-	where condicion); 
-Escalar devuelve  un único valor o fila o columna 
-de fila devuelve una sola fila con varias columnas ROw()
-de tabla devuelve varias filas y varias columnas
-correlacional
-
- 1. reto 1 crear tabla empleados (id,nombre,deptoId, salario), producto (id,nombre,precio,categoria),
- departamento(id,nombre)
- 2. Vamos a registrar 5 empleados 3 departamentos y 5 productos*/
-
-CREATE DATABASE empresa_db;
-
-USE empresa_db;
-
--- Tabla: departamentos
-
-CREATE TABLE departamentos (
-
-  idDepto INT PRIMARY KEY,
-
-  nombreDepto VARCHAR(50)
-
-);
-
--- Tabla: empleados
-
-CREATE TABLE empleados (
-
-  idEmpleado INT PRIMARY KEY,
-
-  nombreEmpleado VARCHAR(50),
-
-  depto_id INT,
-
-  salarioEmpleado DECIMAL(10,2),
-
-  FOREIGN KEY (depto_id) REFERENCES departamentos(idDepto)
-
-);
-
--- Tabla: productos
-
-CREATE TABLE productos (
-
-  idProducto INT PRIMARY KEY,
-
-  nombreProducto VARCHAR(60),
-
-  precioProducto DECIMAL(10,2),
-
-  categoriaProducto VARCHAR(40)
-
-);
- 
-INSERT INTO departamentos (idDepto, nombreDepto) VALUES
-
-(1, 'Recursos Humanos'),
-
-(2, 'Tecnología'),
-
-(3, 'Ventas'),
-
-(4, 'Finanzas');
- 
-INSERT INTO empleados (idEmpleado, nombreEmpleado, depto_id, salarioEmpleado) VALUES
-
-(101, 'Carlos Pérez', 2, 3500000.00),
-
-(102, 'Laura Gómez', 1, 2800000.00),
-
-(103, 'Andrés Rodríguez', 3, 3000000.00),
-
-(104, 'María López', 4, 4000000.00),
-
-(105, 'Juan Martínez', 2, 3700000.00);
- 
-INSERT INTO productos (idProducto, nombreProducto, precioProducto, categoriaProducto) VALUES
-
-(201, 'Laptop Lenovo', 2500000.00, 'Tecnología'),
-
-(202, 'Mouse Inalámbrico', 80000.00, 'Accesorios'),
-
-(203, 'Teclado Mecánico', 150000.00, 'Accesorios'),
-
-(204, 'Monitor 24 pulgadas', 700000.00, 'Tecnología'),
-
-(205, 'Silla Ergonómica', 900000.00, 'Oficina');
-
-select*from empleados;
-
-
-/*Subconsultas*/
-###-----Where----
-select nombreEmpleado,salarioEmpleado 
-from empleados
-where salarioEmpleado>
-	(select AVG(salarioEmpleado)
-    from empleados);
-    
- ###-----Where+in----
-select nombreEmpleado,salarioEmpleado 
-from empleados
-where depto_id in 
-	(select idDepto
-    from departamentos
-    where nombreDepto in ('Ventas','Tecnología'));
-   
-   
- ###-----tabla derivada----
-select depto_id,prom_salario
-from 
-	(select depto_id,AVG(salarioEmpleado)as prom_salario
-	from empleados
-    group by depto_id) as promedios
-where prom_salario > 2800000.000000;
-
-SELECT nombreProducto, precioProducto
-FROM productos
-WHERE precioProducto > (
-    SELECT AVG(precioProducto)
-    FROM productos
+where precioproducto > (
+    select avg(precioproducto)
+    from productos
 )
-ORDER BY precioProducto DESC;
+order by precioproducto desc;
 
-select * from productos;
-
-select avg(precioProducto) from productos;
-
-create table Pedido 
-(
-id_pedido int auto_increment primary key, 
-id_cliente int not null,
-cliente varchar (50),
-fecha_pedido datetime default now(),
-estado enum ('pedido','enviado','entregado','pagado'),
-valorPedido decimal (10,2),
-foreign key (id_cliente) references clientes (id_cliente)
+create table pedido (
+    id_pedido int auto_increment primary key,
+    id_cliente int not null,
+    cliente varchar(50),
+    fecha_pedido datetime default now(),
+    estado enum('pedido','enviado','entregado','pagado'),
+    valorpedido decimal(10,2),
+    foreign key (id_cliente) references clientes(id_cliente)
 );
 
-CREATE TABLE detalle_pedido (
-    id_detalle INT AUTO_INCREMENT PRIMARY KEY,
-    id_pedido INT NOT NULL,
-    id_producto INT NOT NULL,
-    cantidad INT NOT NULL,
-    precio_unit DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (id_pedido) REFERENCES Pedido(id_pedido),
-    FOREIGN KEY (id_producto) REFERENCES productos(idProducto)
+create table detalle_pedido (
+    id_detalle int auto_increment primary key,
+    id_pedido int not null,
+    id_producto int not null,
+    cantidad int not null,
+    precio_unit decimal(10,2) not null,
+    foreign key (id_pedido) references pedido(id_pedido),
+    foreign key (id_producto) references productos(idproducto)
 );
 
-INSERT INTO Pedido (id_cliente, cliente, fecha_pedido, estado, valorPedido) VALUES
-(1, 'Ana Torres', NOW(), 'pedido', 2580000.00),
-(2, 'Luis Ramírez', NOW(), 'enviado', 80000.00),
-(3, 'Sofía Herrera', NOW(), 'entregado', 150000.00),
-(4, 'Carlos Mendoza', NOW(), 'pagado', 700000.00),
-(5, 'Valentina Ríos', NOW(), 'pedido', 900000.00),
-(6, 'Jorge Castro', NOW(), 'enviado', 2580000.00),
-(7, 'Diana Morales', NOW(), 'entregado', 780000.00);
+insert into pedido (id_cliente, cliente, fecha_pedido, estado, valorpedido) values
+(1, 'ana torres', now(), 'pedido', 2580000.00),
+(2, 'luis ramírez', now(), 'enviado', 80000.00),
+(3, 'sofía herrera', now(), 'entregado', 150000.00),
+(4, 'carlos mendoza', now(), 'pagado', 700000.00),
+(5, 'valentina ríos', now(), 'pedido', 900000.00),
+(6, 'jorge castro', now(), 'enviado', 2580000.00),
+(7, 'diana morales', now(), 'entregado', 780000.00);
 
-INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, precio_unit) VALUES
--- Pedido 1
+insert into detalle_pedido (id_pedido, id_producto, cantidad, precio_unit) values
 (1, 201, 1, 2500000.00),
 (1, 202, 1, 80000.00),
-
--- Pedido 2
 (2, 202, 1, 80000.00),
-
--- Pedido 3
 (3, 203, 1, 150000.00),
-
--- Pedido 4
 (4, 204, 1, 700000.00),
-
--- Pedido 5
 (5, 205, 1, 900000.00),
-
--- Pedido 6
 (6, 201, 1, 2500000.00),
 (6, 202, 1, 80000.00),
-
--- Pedido 7
 (7, 204, 1, 700000.00),
 (7, 203, 1, 80000.00);
 
 select * from pedido;
-
 select * from detalle_pedido;
-
 select * from clientes;
 
-### Tarea: MOSTRAR EL DETALLE COMPLETO DE LOS PEDIDOS (cliente que pedido tiene y qué productos compró)
-/*
-select columnas
-from tabla1 alias1
-join tabla2 alias2 on alias1.campo = alias2.campo;
-*/
 select 
     c.nombrecliente,
     p.id_pedido,
@@ -373,3 +150,64 @@ join clientes c on p.id_cliente = c.id_cliente
 join detalle_pedido dp on p.id_pedido = dp.id_pedido
 join productos pr on dp.id_producto = pr.idproducto
 order by p.id_pedido asc;
+
+delimiter //
+
+create procedure cancelar_pedido(
+    in p_id_pedido int,
+    in p_id_cliente int,
+    out p_mensaje varchar(200)
+)
+begin
+
+    declare v_existe int;
+    declare v_estado varchar(20);
+
+    declare exit handler for sqlexception
+    begin
+        rollback;
+        set p_mensaje = 'error: transaccion cancelada';
+    end;
+
+    select count(*) into v_existe
+    from pedido
+    where id_pedido = p_id_pedido
+    and id_cliente = p_id_cliente;
+
+    if v_existe = 0 then
+        set p_mensaje = 'el pedido no existe o no pertenece al cliente';
+    else
+
+        select estado into v_estado
+        from pedido
+        where id_pedido = p_id_pedido;
+
+        if v_estado = 'cancelado' or v_estado = 'entregado' then
+            set p_mensaje = 'no se puede cancelar el pedido';
+        else
+
+            start transaction;
+
+            update pedido
+            set estado = 'cancelado'
+            where id_pedido = p_id_pedido;
+
+            update productos pr
+            join detalle_pedido dp on pr.idproducto = dp.id_producto
+            set pr.categoriaproducto = pr.categoriaproducto
+            where dp.id_pedido = p_id_pedido;
+
+            commit;
+
+            set p_mensaje = concat('pedido ', p_id_pedido, ' cancelado correctamente');
+
+        end if;
+
+    end if;
+
+end //
+
+delimiter ;
+
+call cancelar_pedido(1,1,@mensaje);
+select @mensaje;
