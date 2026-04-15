@@ -13,11 +13,6 @@ CREATE TABLE clientes (
     fecha_registro  DATE DEFAULT (CURRENT_DATE)
 );
 
-
-
-
-
-
 CREATE TABLE productos (
     producto_id  INT AUTO_INCREMENT PRIMARY KEY,
     nombre       VARCHAR(100) NOT NULL,
@@ -74,26 +69,34 @@ INSERT INTO pedidos VALUES
 delimiter //
 
 create function fn_ingreso_cliente(p_cliente_id int)
-returns decimal(10,2)
+returns decimal(12,2)
 deterministic
 begin
 
-    declare v_total decimal (10,2);
-	select sum (p.cantidad * pr.precio)
+    declare v_total decimal(12,2);
+
+    select sum(p.cantidad * pr.precio)
     into v_total
-	from pedidos p
-    
+    from pedidos p
     join productos pr on p.producto_id = pr.producto_id
-    
-    where p.cliente_id = p.cliente_id
-    and p.estado = 'entragado';
-    
-    return (v_total,0);
+    where p.cliente_id = p_cliente_id
+    and p.estado = 'entregado';
+
+    return ifnull(v_total,0);
 
 end //
 
 delimiter ;
 
-    
+select 
+    nombre,
+    ciudad,
+    fn_ingreso_cliente(cliente_id) as ingreso_total
+from clientes
+order by ingreso_total desc;
+
+
+
+
     
     
