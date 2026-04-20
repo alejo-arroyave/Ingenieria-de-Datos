@@ -1,105 +1,96 @@
--- ================================================================
--- CASO: Sistema de Gestion Hospitalaria
--- Tablas: medicos, pacientes, consultas
--- ================================================================
-DROP DATABASE IF EXISTS hospital_db;
-CREATE DATABASE hospital_db CHARACTER SET utf8mb4;
-USE hospital_db;
+-- =====================================================
+-- DDL: CREACION DE BASE DE DATOS Y TABLAS
+-- =====================================================
+DROP DATABASE IF EXISTS tienda_tech;
+CREATE DATABASE tienda_tech CHARACTER SET utf8mb4;
+USE tienda_tech;
 
-CREATE TABLE medicos (
-    medico_id        INT AUTO_INCREMENT PRIMARY KEY,
-    nombre           VARCHAR(100) NOT NULL,
-    especialidad     VARCHAR(80)  NOT NULL,
-    salario          DECIMAL(12,2) NOT NULL CHECK (salario > 0),
-    fecha_ingreso    DATE NOT NULL,
-    activo           TINYINT(1) DEFAULT 1
+CREATE TABLE clientes (
+    cliente_id      INT AUTO_INCREMENT PRIMARY KEY,
+    nombre          VARCHAR(100) NOT NULL,
+    email           VARCHAR(100) UNIQUE NOT NULL,
+    ciudad          VARCHAR(60),
+    fecha_registro  DATE DEFAULT (CURRENT_DATE)
 );
 
-CREATE TABLE pacientes (
-    paciente_id      INT AUTO_INCREMENT PRIMARY KEY,
-    nombre           VARCHAR(100) NOT NULL,
-    fecha_nacimiento DATE NOT NULL,
-    ciudad           VARCHAR(60),
-    email            VARCHAR(100) UNIQUE,
-    eps              VARCHAR(80)
+CREATE TABLE productos (
+    producto_id  INT AUTO_INCREMENT PRIMARY KEY,
+    nombre       VARCHAR(100) NOT NULL,
+    categoria    VARCHAR(60),
+    precio       DECIMAL(10,2) NOT NULL CHECK (precio > 0),
+    stock        INT DEFAULT 0
 );
 
-CREATE TABLE consultas (
-    consulta_id      INT AUTO_INCREMENT PRIMARY KEY,
-    medico_id        INT NOT NULL,
-    paciente_id      INT NOT NULL,
-    fecha_consulta   DATE NOT NULL,
-    diagnostico      VARCHAR(200),
-    costo            DECIMAL(10,2) NOT NULL CHECK (costo > 0),
-    estado           VARCHAR(20) DEFAULT "programada"
-        CHECK (estado IN ("programada","realizada","cancelada")),
-    FOREIGN KEY (medico_id)   REFERENCES medicos(medico_id),
-    FOREIGN KEY (paciente_id) REFERENCES pacientes(paciente_id)
+CREATE TABLE pedidos (
+    pedido_id    INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id   INT NOT NULL,
+    producto_id  INT NOT NULL,
+    cantidad     INT NOT NULL CHECK (cantidad > 0),
+    fecha_pedido DATE DEFAULT (CURRENT_DATE),
+    estado       VARCHAR(20) DEFAULT "pendiente"
+        CHECK (estado IN ("pendiente","entregado","cancelado")),
+    FOREIGN KEY (cliente_id)  REFERENCES clientes(cliente_id),
+    FOREIGN KEY (producto_id) REFERENCES productos(producto_id)
 );
 
-show tables;
-
-describe medicos;
-describe pacientes;
-describe consultas;
-
--- ================================================================
+-- =====================================================
 -- DML: DATOS DE PRUEBA
--- ================================================================
-INSERT INTO medicos VALUES
- (1,"Dra. Laura Rios","Cardiologia",8500000.00,"2018-03-10",1),
- (2,"Dr. Carlos Mesa","Neurologia",9200000.00,"2016-07-22",1),
- (3,"Dra. Sofia Vega","Pediatria",7800000.00,"2020-01-15",1),
- (4,"Dr. Andres Gil","Ortopedia",8100000.00,"2019-06-01",1),
- (5,"Dra. Paula Mora","Cardiologia",8700000.00,"2017-09-30",1),
- (6,"Dr. Ivan Cruz","Dermatologia",7500000.00,"2021-04-12",0),
- (7,"Dra. Marta Leon","Neurologia",9500000.00,"2015-11-05",1),
- (8,"Dr. Felipe Ossa","Pediatria",7600000.00,"2022-02-28",1);
+-- =====================================================
+INSERT INTO clientes VALUES
+ (1,"Ana Lopez","ana@mail.com","Bogota","2023-01-15"),
+ (2,"Carlos Ruiz","carlos@mail.com","Medellin","2023-03-22"),
+ (3,"Maria Torres","maria@mail.com","Cali","2023-05-10"),
+ (4,"Pedro Gomez","pedro@mail.com","Bogota","2023-07-08"),
+ (5,"Sofia Herrera","sofia@mail.com","Barranquilla","2023-09-01"),
+ (6,"Luis Martinez","luis@mail.com","Bogota","2024-01-20"),
+ (7,"Camila Vargas","camila@mail.com","Cali","2024-02-14"),
+ (8,"Diego Morales","diego@mail.com","Medellin","2024-03-30");
 
-INSERT INTO pacientes VALUES
- (1,"Juan Perez","1985-04-12","Bogota","juan@mail.com","Sura"),
- (2,"Ana Gomez","1992-08-25","Medellin","ana@mail.com","Compensar"),
- (3,"Luis Vargas","1978-12-03","Cali","luis@mail.com","Sura"),
- (4,"Maria Diaz","2001-06-17","Bogota","maria@mail.com","Famisanar"),
- (5,"Carlos Ruiz","1965-01-30","Barranquilla","carlos@mail.com","Compensar"),
- (6,"Lucia Herrera","1990-09-08","Bogota","lucia@mail.com","Sura"),
- (7,"Pedro Soto","2005-03-22","Cali","pedro@mail.com","Famisanar"),
- (8,"Valeria Torres","1998-11-14","Medellin","valeria@mail.com","Compensar");
+INSERT INTO productos VALUES
+ (1,"Laptop Pro 15","Computadores",3500000.00,12),
+ (2,"Mouse Inalambrico","Perifericos",85000.00,50),
+ (3,"Teclado Mecanico","Perifericos",220000.00,30),
+ (4,"Monitor 27","Pantallas",1200000.00,8),
+ (5,"Auriculares BT","Audio",350000.00,25),
+ (6,"Webcam HD","Perifericos",180000.00,20),
+ (7,"Disco SSD 1TB","Almacenamiento",420000.00,40),
+ (8,"Tablet 10","Moviles",1800000.00,6);
 
-INSERT INTO consultas VALUES
- (1,1,1,"2024-01-10","Hipertension leve",150000,"realizada"),
- (2,1,3,"2024-01-22","Control cardiaco",150000,"realizada"),
- (3,2,2,"2024-02-05","Cefalea cronica",200000,"realizada"),
- (4,2,5,"2024-02-18","Migraña",200000,"cancelada"),
- (5,3,4,"2024-03-01","Control crecimiento",90000,"realizada"),
- (6,3,7,"2024-03-14","Fiebre alta",90000,"realizada"),
- (7,4,6,"2024-04-02","Fractura muñeca",250000,"realizada");
- 
-select * from medicos;
-select * from pacientes;
-select * from consultas;
- 
-DELIMITER //
+INSERT INTO pedidos VALUES
+ (1,1,1,1,"2024-01-10","entregado"),(2,1,2,2,"2024-01-15","entregado"),
+ (3,2,3,1,"2024-02-05","entregado"),(4,2,5,1,"2024-02-20","cancelado"),
+ (5,3,4,1,"2024-03-01","entregado"),(6,3,7,2,"2024-03-15","pendiente"),
+ (7,4,2,3,"2024-04-02","entregado"),(8,4,6,1,"2024-04-10","pendiente"),
+ (9,5,8,1,"2024-04-18","entregado"),(10,6,1,2,"2024-05-05","entregado"),
+ (11,6,3,1,"2024-05-12","pendiente"),(12,7,5,2,"2024-05-20","entregado"),
+ (13,1,7,1,"2024-06-01","entregado"),(14,8,4,1,"2024-06-10","cancelado"),
+ (15,5,2,4,"2024-06-15","entregado"),(16,3,1,1,"2024-07-01","pendiente");
 
-create function fn_edad_paciente(p_paciente_id int)
-returns int
+delimiter //
+
+create function fn_ingreso_cliente(p_cliente_id int)
+returns decimal(12,2)
 deterministic
 begin
-    declare v_edad int;
 
-    select TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE())
-    into v_edad
-    FROM pacientes
-    WHERE paciente_id = p_paciente_id;
+    declare v_total decimal(12,2);
 
-    RETURN v_edad;
-END //
+    select sum(p.cantidad * pr.precio)
+    into v_total
+    from pedidos p
+    join productos pr on p.producto_id = pr.producto_id
+    where p.cliente_id = p_cliente_id
+    and p.estado = 'entregado';
 
-DELIMITER ;
+    return ifnull(v_total,0);
 
-select p.nombre, p.eps, fn_edad_paciente(p.paciente_id) as edad,
-	count(c.consulta_id) as total_consultas
-	from pacientes p
-	join consultas c on p.paciente_id = c.paciente_id
-		where c.estado = "realizada"
-	group by p.paciente_id order by edad desc;
+end //
+
+delimiter ;
+
+select 
+    nombre,
+    ciudad,
+    fn_ingreso_cliente(cliente_id) as ingreso_total
+from clientes
+order by ingreso_total desc;
