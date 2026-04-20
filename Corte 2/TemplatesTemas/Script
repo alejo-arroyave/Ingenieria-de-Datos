@@ -1,0 +1,171 @@
+-- =====================================================
+-- = FUNCIONES
+-- =====================================================
+
+-- Template: función básica
+delimiter //
+
+create function nombre_funcion(
+    p_parametro tipo    -- parámetro de entrada (dato que recibe la función)
+)
+returns tipo            -- tipo de dato que devuelve
+deterministic           -- indica que con los mismos datos siempre retorna lo mismo
+begin
+    -- variable interna para guardar el resultado
+    declare v_resultado tipo;
+
+    -- operación o consulta
+    select columna
+    into v_resultado
+    from tabla
+    where condicion;
+
+    -- retorno del valor final
+    return v_resultado;
+
+end //
+
+delimiter ;
+
+-- =====================================================
+-- = PROCEDURES
+-- =====================================================
+
+-- Template: procedimiento básico
+delimiter //
+
+create procedure nombre_procedimiento(
+    in p_parametro tipo,      -- parámetro de entrada
+    out p_salida tipo,        -- parámetro de salida
+    inout p_mixto tipo        -- parámetro entrada/salida
+)
+begin
+    -- variable interna
+    declare v_variable tipo;
+
+    -- lógica: consulta o cálculo
+    select columna
+    into v_variable
+    from tabla
+    where condicion;
+
+    -- ejemplo de estructura condicional
+    if v_variable is null then
+        set p_salida = 0;   -- asigna valor si no hay resultado
+    else
+        set p_salida = v_variable;
+    end if;
+
+    -- también puede mostrar resultados
+    select v_variable as resultado;
+
+end //
+
+delimiter ;
+
+-- =====================================================
+-- = JOINS
+-- =====================================================
+
+-- Template: join básico entre dos tablas
+select 
+    t1.columna1,    -- columna de la tabla 1
+    t2.columna2     -- columna de la tabla 2
+from tabla1 t1      -- tabla principal con alias t1
+join tabla2 t2      -- segunda tabla con alias t2
+    on t1.id = t2.id   -- condición de relación entre tablas
+where condicion;
+
+-- Template: join con varias tablas
+select 
+    t1.columna,
+    t2.columna,
+    t3.columna
+from tabla1 t1
+join tabla2 t2 on t1.id = t2.id
+join tabla3 t3 on t2.id = t3.id
+where condicion;
+
+-- =====================================================
+-- = SUBCONSULTAS
+-- =====================================================
+
+-- Subconsulta escalar (devuelve un solo valor)
+select columna
+from tabla
+where columna > (
+    select avg(columna)   -- valor calculado interno
+    from tabla
+);
+
+-- Subconsulta con IN (lista de valores)
+select columna
+from tabla
+where columna in (
+    select columna
+    from otra_tabla
+    where condicion
+);
+
+-- Subconsulta correlacionada (depende de la consulta externa)
+select columna
+from tabla t1
+where columna < (
+    select avg(columna)
+    from tabla
+    where categoria = t1.categoria   -- relación con consulta externa
+);
+
+-- Subconsulta con NOT EXISTS (verifica inexistencia)
+select columna
+from tabla t1
+where not exists (
+    select 1
+    from otra_tabla t2
+    where t2.id = t1.id
+);
+
+-- =====================================================
+-- = VISTAS (VIEWS)
+-- =====================================================
+
+-- Template: crear vista
+create view nombre_vista as
+select 
+    t1.columna1,
+    t2.columna2,
+    (t2.columna3 * t2.columna4) as calculo   -- ejemplo de operación
+from tabla1 t1
+join tabla2 t2 on t1.id = t2.id
+where condicion
+order by columna desc;
+
+-- Uso de la vista
+select * from nombre_vista;
+
+-- =====================================================
+-- = USOS COMBINADOS (nivel más alto)
+-- =====================================================
+
+-- Ejemplo: usar función dentro de un select
+select 
+    nombre,
+    nombre_funcion(id) as resultado
+from tabla
+order by resultado desc;
+
+-- Ejemplo: join + subconsulta
+select 
+    t1.columna,
+    t2.columna
+from tabla1 t1
+join tabla2 t2 on t1.id = t2.id
+where t2.valor > (
+    select avg(valor)
+    from tabla2
+);
+
+-- Ejemplo: vista + filtro
+select *
+from nombre_vista
+where columna > valor;
