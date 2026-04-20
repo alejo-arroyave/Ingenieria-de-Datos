@@ -1,0 +1,389 @@
+drop database if exists tienda_tech;
+create database tienda_tech;
+use tienda_tech;
+
+create table clientes (
+    cliente_id int auto_increment primary key,
+    nombre varchar(100) not null,
+    email varchar(100) unique not null,
+    ciudad varchar(60),
+    fecha_registro date default (current_date)
+);
+
+create table productos (
+    producto_id int auto_increment primary key,
+    nombre varchar(100) not null,
+    categoria varchar(60),
+    precio decimal(10,2) not null,
+    stock int default 0
+);
+
+create table pedidos (
+    pedido_id int auto_increment primary key,
+    cliente_id int not null,
+    producto_id int not null,
+    cantidad int not null,
+    fecha_pedido date default (current_date),
+    estado varchar(20) default "pendiente",
+    foreign key (cliente_id) references clientes(cliente_id),
+    foreign key (producto_id) references productos(producto_id)
+);
+
+insert into clientes values
+(1,"Ana Lopez","ana@mail.com","Bogota","2023-01-15"),
+(2,"Carlos Ruiz","carlos@mail.com","Medellin","2023-03-22"),
+(3,"Maria Torres","maria@mail.com","Cali","2023-05-10"),
+(4,"Pedro Gomez","pedro@mail.com","Bogota","2023-07-08"),
+(5,"Sofia Herrera","sofia@mail.com","Barranquilla","2023-09-01"),
+(6,"Luis Martinez","luis@mail.com","Bogota","2024-01-20"),
+(7,"Camila Vargas","camila@mail.com","Cali","2024-02-14"),
+(8,"Diego Morales","diego@mail.com","Medellin","2024-03-30");
+
+insert into productos values
+(1,"Laptop Pro 15","Computadores",3500000,12),
+(2,"Mouse Inalambrico","Perifericos",85000,50),
+(3,"Teclado Mecanico","Perifericos",220000,30),
+(4,"Monitor 27","Pantallas",1200000,8),
+(5,"Auriculares BT","Audio",350000,25),
+(6,"Webcam HD","Perifericos",180000,20),
+(7,"Disco SSD 1TB","Almacenamiento",420000,40),
+(8,"Tablet 10","Moviles",1800000,6);
+
+insert into pedidos values
+(1,1,1,1,"2024-01-10","entregado"),
+(2,1,2,2,"2024-01-15","entregado"),
+(3,2,3,1,"2024-02-05","entregado"),
+(4,2,5,1,"2024-02-20","cancelado"),
+(5,3,4,1,"2024-03-01","entregado"),
+(6,3,7,2,"2024-03-15","pendiente"),
+(7,4,2,3,"2024-04-02","entregado"),
+(8,4,6,1,"2024-04-10","pendiente"),
+(9,5,8,1,"2024-04-18","entregado"),
+(10,6,1,2,"2024-05-05","entregado"),
+(11,6,3,1,"2024-05-12","pendiente"),
+(12,7,5,2,"2024-05-20","entregado"),
+(13,1,7,1,"2024-06-01","entregado"),
+(14,8,4,1,"2024-06-10","cancelado"),
+(15,5,2,4,"2024-06-15","entregado"),
+(16,3,1,1,"2024-07-01","pendiente");
+
+-- =====================================================
+-- ejercicios
+-- =====================================================
+
+----- 1. agregar columna total_valor y crear indice
+alter table pedidos add column total_valor decimal(12,2);
+
+update pedidos p
+join productos pr on p.producto_id = pr.producto_id
+set p.total_valor = p.cantidad * pr.precio;
+
+create index idx_estado on pedidos(estado);
+
+----- 2. crear tabla log y vista
+create table log_cambios_estado(
+    log_id int auto_increment primary key,
+    pedido_id int,
+    estado_anterior varchar(20),
+    estado_nuevo varchar(20),
+    fecha_cambio datetime default now(),
+    foreign key (pedido_id) references pedidos(pedido_id)
+);
+
+create view vista_log_reciente as
+select *
+from log_cambios_estado
+order by fecha_cambio desc
+limit 10;
+
+----- 3. insertar cliente, pedido, actualizar stock y consultar
+insert into clientes(nombre,email,ciudad)
+values ("Laura Rios","laura@mail.com","Manizales");
+
+insert into pedidos(cliente_id,producto_id,cantidad,estado)
+values (9,3,2,"pendiente");
+
+update productos
+set stock = stock - 2
+where producto_id = 3;
+
+select c.nombre, pr.nombre, p.estado
+from pedidos p
+join clientes c on p.cliente_id = c.cliente_id
+join productos pr on p.producto_id = pr.producto_id
+order by p.pedido_id desc
+limit 1;
+
+----- 4. update con subconsulta y delete con not exists
+update productos pr
+set precio = precio * 1.08
+where stock < (
+    select avg(p2.stock)
+    from productos p2
+    where p2.categoria = pr.categoria
+);
+
+delete from pedidos p
+where estado = "cancelado"
+and not exists (
+    select 1
+    from pedidos p2
+    where p2.cliente_id = p.cliente_id
+    and p2.estado = "entregado"
+);
+
+----- 5. pedidos entregados mayores al promedio
+select c.nombre, c.ciudad, pr.nombre, p.cantidad, p.fecha_pedido
+from pedidos p
+join clientes c on p.cliente_id = c.cliente_id
+join productos pr on p.producto_id = pr.producto_id
+where p.estado = "entregado"
+and (p.cantidad * pr.precio) > (
+    select avg(p2.cantidad * pr2.precio)
+    from pedidos p2
+    join productos pr2 on p2.producto_id = pr2.producto_id
+    where p2.estado = "entregado"
+)
+order by (p.cantidad * pr.precio) desc;
+
+----- 6. vista ventas por ciudad
+create view vista_ventas_ciudad as
+select c.ciudad,
+count(*) as total_pedidos,
+sum(p.cantidad * pr.precio) as ingresos,
+avg(p.cantidad * pr.precio) as promedio
+from pedidos p
+join clientes c on p.cliente_id = c.cliente_id
+join productos pr on p.producto_id = pr.producto_id
+where p.estado = "entregado"
+group by c.ciudad;
+
+select * from vista_ventas_ciudad
+where ingresos > 5000000
+order by ingresos desc;
+
+----- 7. vista productos populares
+create view vista_productos_populares as
+select pr.producto_id, pr.nombre, pr.categoria, pr.precio,
+count(distinct p.cliente_id) as total_clientes
+from pedidos p
+join productos pr on p.producto_id = pr.producto_id
+where p.estado = "entregado"
+group by pr.producto_id
+having count(distinct p.cliente_id) > 1;
+
+select * from vista_productos_populares
+where categoria = "Perifericos";
+
+----- 8. funcion ingreso cliente
+delimiter //
+create function fn_ingreso_cliente(p_cliente_id int)
+returns decimal(12,2)
+deterministic
+begin
+    declare v_total decimal(12,2);
+
+    select sum(p.cantidad * pr.precio)
+    into v_total
+    from pedidos p
+    join productos pr on p.producto_id = pr.producto_id
+    where p.cliente_id = p_cliente_id
+    and p.estado = "entregado";
+
+    return ifnull(v_total,0);
+end //
+delimiter ;
+
+select nombre, ciudad, fn_ingreso_cliente(cliente_id) as ingreso_total
+from clientes
+order by ingreso_total desc;
+
+----- 9. funcion stock suficiente
+delimiter //
+create function fn_stock_suficiente(p_producto_id int, p_cantidad int)
+returns int
+deterministic
+begin
+    declare v_stock int;
+
+    select stock into v_stock
+    from productos
+    where producto_id = p_producto_id;
+
+    if v_stock >= p_cantidad then
+        return 1;
+    else
+        return 0;
+    end if;
+end //
+delimiter ;
+
+select nombre, stock
+from productos
+where fn_stock_suficiente(producto_id,5) = 0;
+
+----- 10. procedimiento actualizar estado pedido
+delimiter //
+create procedure sp_actualizar_estado_pedido(p_id int, p_estado varchar(20))
+begin
+    declare v_estado varchar(20);
+
+    select estado into v_estado
+    from pedidos
+    where pedido_id = p_id;
+
+    insert into log_cambios_estado(pedido_id,estado_anterior,estado_nuevo)
+    values(p_id,v_estado,p_estado);
+
+    update pedidos
+    set estado = p_estado
+    where pedido_id = p_id;
+
+    if p_estado = "cancelado" then
+        update productos pr
+        join pedidos p on pr.producto_id = p.producto_id
+        set pr.stock = pr.stock + p.cantidad
+        where p.pedido_id = p_id;
+    end if;
+end //
+delimiter ;
+
+----- 11. procedimiento resumen cliente
+delimiter //
+create procedure sp_resumen_cliente(p_id int)
+begin
+    select c.nombre, c.ciudad,
+    sum(case when p.estado="entregado" then 1 else 0 end) entregados,
+    sum(case when p.estado="pendiente" then 1 else 0 end) pendientes,
+    sum(case when p.estado="cancelado" then 1 else 0 end) cancelados,
+    sum(case when p.estado="entregado" then p.cantidad*pr.precio else 0 end) ingreso
+    from clientes c
+    left join pedidos p on c.cliente_id = p.cliente_id
+    left join productos pr on p.producto_id = pr.producto_id
+    where c.cliente_id = p_id
+    group by c.cliente_id;
+end //
+delimiter ;
+
+/*
+create view nombre_vista as
+select 
+    t1.columna1,
+    t2.columna2
+from tabla1 t1
+join tabla2 t2 on t1.id = t2.id
+where condicion
+order by columna desc;
+*/
+----- 12. vista pedidos pendientes y procedimiento alerta
+create view vista_pedidos_pendientes as
+select p.pedido_id, c.nombre, pr.nombre, p.cantidad, pr.precio,
+datediff(curdate(),p.fecha_pedido) as dias
+from pedidos p
+join clientes c on p.cliente_id = c.cliente_id
+join productos pr on p.producto_id = pr.producto_id
+where p.estado = "pendiente";
+
+delimiter //
+create procedure sp_alertar_retrasos(p_dias int)
+begin
+    select * from vista_pedidos_pendientes
+    where dias > p_dias;
+end //
+delimiter ;
+
+----- 13. columna descuento y funcion precio final
+alter table productos add column descuento decimal(5,2) default 0;
+
+delimiter //
+create function fn_precio_final(p_id int)
+returns decimal(10,2)
+deterministic
+begin
+    declare v_precio decimal(10,2);
+    declare v_desc decimal(5,2);
+
+    select precio, descuento into v_precio, v_desc
+    from productos
+    where producto_id = p_id;
+
+    return v_precio * (1 - v_desc/100);
+end //
+delimiter ;
+
+select nombre, precio, descuento, fn_precio_final(producto_id) as final
+from productos
+order by final desc
+limit 3;
+
+----- 14. procedimiento registrar pedido
+delimiter //
+create procedure sp_registrar_pedido(p_cliente int, p_producto int, p_cant int)
+begin
+    insert into pedidos(cliente_id,producto_id,cantidad,estado)
+    values(p_cliente,p_producto,p_cant,"pendiente");
+
+    update productos
+    set stock = stock - p_cant
+    where producto_id = p_producto;
+
+    select c.nombre, pr.nombre, p.cantidad
+    from pedidos p
+    join clientes c on p.cliente_id = c.cliente_id
+    join productos pr on p.producto_id = pr.producto_id
+    order by p.pedido_id desc
+    limit 1;
+end //
+delimiter ;
+
+----- 15. funcion clasificar producto y vista
+delimiter //
+create function fn_clasificar_producto(p_id int)
+returns varchar(20)
+deterministic
+begin
+    declare v_precio decimal(10,2);
+
+    select precio into v_precio
+    from productos
+    where producto_id = p_id;
+
+    if v_precio > 1000000 then return "premium";
+    elseif v_precio >= 200000 then return "estandar";
+    else return "basico";
+    end if;
+end //
+delimiter ;
+
+create view vista_catalogo_clasificado as
+select nombre, categoria, precio,
+fn_clasificar_producto(producto_id) as clasificacion, stock
+from productos;
+
+select * from vista_catalogo_clasificado
+where clasificacion = "premium" and stock > 5;
+
+----- 16. vista clientes vip y consulta detalle
+create view vista_clientes_vip as
+select c.cliente_id, c.nombre, c.ciudad,
+count(*) as total
+from pedidos p
+join clientes c on p.cliente_id = c.cliente_id
+where p.estado = "entregado"
+group by c.cliente_id
+having count(*) > (
+    select avg(t.c)
+    from (
+        select count(*) as c
+        from pedidos
+        where estado="entregado"
+        group by cliente_id
+    ) t
+);
+
+select c.nombre, pr.nombre, p.fecha_pedido
+from vista_clientes_vip v
+join pedidos p on v.cliente_id = p.cliente_id
+join productos pr on p.producto_id = pr.producto_id
+join clientes c on c.cliente_id = v.cliente_id
+order by p.fecha_pedido desc;
