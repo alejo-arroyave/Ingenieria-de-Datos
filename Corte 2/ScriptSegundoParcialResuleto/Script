@@ -1,7 +1,15 @@
+-- =====================================================
+-- CREACION BASE DE DATOS
+-- =====================================================
 drop database if exists tienda_tech;
 create database tienda_tech;
 use tienda_tech;
 
+-- =====================================================
+-- TABLAS PRINCIPALES
+-- =====================================================
+
+-- tabla clientes: guarda info básica del cliente
 create table clientes (
     cliente_id int auto_increment primary key,
     nombre varchar(100) not null,
@@ -10,6 +18,7 @@ create table clientes (
     fecha_registro date default (current_date)
 );
 
+-- tabla productos: catalogo con precio y stock
 create table productos (
     producto_id int auto_increment primary key,
     nombre varchar(100) not null,
@@ -18,6 +27,7 @@ create table productos (
     stock int default 0
 );
 
+-- tabla pedidos: relacion cliente-producto
 create table pedidos (
     pedido_id int auto_increment primary key,
     cliente_id int not null,
@@ -29,6 +39,11 @@ create table pedidos (
     foreign key (producto_id) references productos(producto_id)
 );
 
+-- =====================================================
+-- INSERTS (DATOS)
+-- =====================================================
+
+-- clientes de prueba
 insert into clientes values
 (1,"Ana Lopez","ana@mail.com","Bogota","2023-01-15"),
 (2,"Carlos Ruiz","carlos@mail.com","Medellin","2023-03-22"),
@@ -39,6 +54,7 @@ insert into clientes values
 (7,"Camila Vargas","camila@mail.com","Cali","2024-02-14"),
 (8,"Diego Morales","diego@mail.com","Medellin","2024-03-30");
 
+-- productos con precio y stock
 insert into productos values
 (1,"Laptop Pro 15","Computadores",3500000,12),
 (2,"Mouse Inalambrico","Perifericos",85000,50),
@@ -49,6 +65,7 @@ insert into productos values
 (7,"Disco SSD 1TB","Almacenamiento",420000,40),
 (8,"Tablet 10","Moviles",1800000,6);
 
+-- pedidos con estados distintos
 insert into pedidos values
 (1,1,1,1,"2024-01-10","entregado"),
 (2,1,2,2,"2024-01-15","entregado"),
@@ -68,19 +85,24 @@ insert into pedidos values
 (16,3,1,1,"2024-07-01","pendiente");
 
 -- =====================================================
--- ejercicios
+-- EJERCICIOS
 -- =====================================================
 
 ----- 1. agregar columna total_valor y crear indice
+-- se agrega columna donde guardaremos total = cantidad * precio
 alter table pedidos add column total_valor decimal(12,2);
 
+-- se llena usando join (porque precio está en productos)
 update pedidos p
 join productos pr on p.producto_id = pr.producto_id
 set p.total_valor = p.cantidad * pr.precio;
 
+-- indice para acelerar consultas por estado
 create index idx_estado on pedidos(estado);
 
+
 ----- 2. crear tabla log y vista
+-- tabla para guardar cambios de estado
 create table log_cambios_estado(
     log_id int auto_increment primary key,
     pedido_id int,
@@ -90,23 +112,29 @@ create table log_cambios_estado(
     foreign key (pedido_id) references pedidos(pedido_id)
 );
 
+-- vista para ver últimos cambios
 create view vista_log_reciente as
 select *
 from log_cambios_estado
 order by fecha_cambio desc
 limit 10;
 
+
 ----- 3. insertar cliente, pedido, actualizar stock y consultar
+-- insertar cliente nuevo
 insert into clientes(nombre,email,ciudad)
 values ("Laura Rios","laura@mail.com","Manizales");
 
+-- insertar pedido para ese cliente
 insert into pedidos(cliente_id,producto_id,cantidad,estado)
 values (9,3,2,"pendiente");
 
+-- descontar stock del producto
 update productos
 set stock = stock - 2
 where producto_id = 3;
 
+-- consulta con join para ver el pedido creado
 select c.nombre, pr.nombre, p.estado
 from pedidos p
 join clientes c on p.cliente_id = c.cliente_id
@@ -114,7 +142,9 @@ join productos pr on p.producto_id = pr.producto_id
 order by p.pedido_id desc
 limit 1;
 
+
 ----- 4. update con subconsulta y delete con not exists
+-- aumentar precio si stock < promedio de su categoria
 update productos pr
 set precio = precio * 1.08
 where stock < (
@@ -123,6 +153,7 @@ where stock < (
     where p2.categoria = pr.categoria
 );
 
+-- eliminar pedidos cancelados sin pedidos entregados del cliente
 delete from pedidos p
 where estado = "cancelado"
 and not exists (
@@ -132,7 +163,9 @@ and not exists (
     and p2.estado = "entregado"
 );
 
+
 ----- 5. pedidos entregados mayores al promedio
+-- lista pedidos cuyo total supera el promedio general
 select c.nombre, c.ciudad, pr.nombre, p.cantidad, p.fecha_pedido
 from pedidos p
 join clientes c on p.cliente_id = c.cliente_id
@@ -146,7 +179,9 @@ and (p.cantidad * pr.precio) > (
 )
 order by (p.cantidad * pr.precio) desc;
 
+
 ----- 6. vista ventas por ciudad
+-- agrupa ventas por ciudad
 create view vista_ventas_ciudad as
 select c.ciudad,
 count(*) as total_pedidos,
@@ -158,11 +193,14 @@ join productos pr on p.producto_id = pr.producto_id
 where p.estado = "entregado"
 group by c.ciudad;
 
+-- consulta filtrada
 select * from vista_ventas_ciudad
 where ingresos > 5000000
 order by ingresos desc;
 
+
 ----- 7. vista productos populares
+-- productos comprados por más de un cliente
 create view vista_productos_populares as
 select pr.producto_id, pr.nombre, pr.categoria, pr.precio,
 count(distinct p.cliente_id) as total_clientes
@@ -175,7 +213,9 @@ having count(distinct p.cliente_id) > 1;
 select * from vista_productos_populares
 where categoria = "Perifericos";
 
+
 ----- 8. funcion ingreso cliente
+-- suma total gastado por cliente en pedidos entregados
 delimiter //
 create function fn_ingreso_cliente(p_cliente_id int)
 returns decimal(12,2)
@@ -194,11 +234,14 @@ begin
 end //
 delimiter ;
 
+-- uso de la funcion
 select nombre, ciudad, fn_ingreso_cliente(cliente_id) as ingreso_total
 from clientes
 order by ingreso_total desc;
 
+
 ----- 9. funcion stock suficiente
+-- valida si hay stock suficiente
 delimiter //
 create function fn_stock_suficiente(p_producto_id int, p_cantidad int)
 returns int
@@ -222,23 +265,29 @@ select nombre, stock
 from productos
 where fn_stock_suficiente(producto_id,5) = 0;
 
+
 ----- 10. procedimiento actualizar estado pedido
+-- cambia estado y guarda historial
 delimiter //
 create procedure sp_actualizar_estado_pedido(p_id int, p_estado varchar(20))
 begin
     declare v_estado varchar(20);
 
+    -- obtener estado actual
     select estado into v_estado
     from pedidos
     where pedido_id = p_id;
 
+    -- guardar cambio en log
     insert into log_cambios_estado(pedido_id,estado_anterior,estado_nuevo)
     values(p_id,v_estado,p_estado);
 
+    -- actualizar estado
     update pedidos
     set estado = p_estado
     where pedido_id = p_id;
 
+    -- si se cancela, devolver stock
     if p_estado = "cancelado" then
         update productos pr
         join pedidos p on pr.producto_id = p.producto_id
@@ -248,7 +297,9 @@ begin
 end //
 delimiter ;
 
+
 ----- 11. procedimiento resumen cliente
+-- resumen de pedidos por estado + ingreso
 delimiter //
 create procedure sp_resumen_cliente(p_id int)
 begin
@@ -265,17 +316,9 @@ begin
 end //
 delimiter ;
 
-/*
-create view nombre_vista as
-select 
-    t1.columna1,
-    t2.columna2
-from tabla1 t1
-join tabla2 t2 on t1.id = t2.id
-where condicion
-order by columna desc;
-*/
+
 ----- 12. vista pedidos pendientes y procedimiento alerta
+-- vista con dias de espera
 create view vista_pedidos_pendientes as
 select p.pedido_id, c.nombre, pr.nombre, p.cantidad, pr.precio,
 datediff(curdate(),p.fecha_pedido) as dias
@@ -284,6 +327,7 @@ join clientes c on p.cliente_id = c.cliente_id
 join productos pr on p.producto_id = pr.producto_id
 where p.estado = "pendiente";
 
+-- procedimiento para filtrar retrasos
 delimiter //
 create procedure sp_alertar_retrasos(p_dias int)
 begin
@@ -292,9 +336,12 @@ begin
 end //
 delimiter ;
 
+
 ----- 13. columna descuento y funcion precio final
+-- agregar descuento
 alter table productos add column descuento decimal(5,2) default 0;
 
+-- calcular precio final con descuento
 delimiter //
 create function fn_precio_final(p_id int)
 returns decimal(10,2)
@@ -316,7 +363,9 @@ from productos
 order by final desc
 limit 3;
 
+
 ----- 14. procedimiento registrar pedido
+-- crea pedido y descuenta stock
 delimiter //
 create procedure sp_registrar_pedido(p_cliente int, p_producto int, p_cant int)
 begin
@@ -336,7 +385,9 @@ begin
 end //
 delimiter ;
 
+
 ----- 15. funcion clasificar producto y vista
+-- clasifica productos por precio
 delimiter //
 create function fn_clasificar_producto(p_id int)
 returns varchar(20)
@@ -363,7 +414,9 @@ from productos;
 select * from vista_catalogo_clasificado
 where clasificacion = "premium" and stock > 5;
 
+
 ----- 16. vista clientes vip y consulta detalle
+-- clientes con más pedidos que el promedio
 create view vista_clientes_vip as
 select c.cliente_id, c.nombre, c.ciudad,
 count(*) as total
@@ -381,6 +434,7 @@ having count(*) > (
     ) t
 );
 
+-- detalle de pedidos de clientes VIP
 select c.nombre, pr.nombre, p.fecha_pedido
 from vista_clientes_vip v
 join pedidos p on v.cliente_id = p.cliente_id
