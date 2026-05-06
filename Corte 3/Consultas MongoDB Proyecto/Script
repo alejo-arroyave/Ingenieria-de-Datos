@@ -1,1 +1,75 @@
+>use tienda
+<switched to db tienda
 
+>db.cliente.find ({nit_cedula: "900112233-1"})
+  
+<{
+  _id: ObjectId('69f8f3a40cbdd61344164cde'),
+  id_cliente: 1,
+  nit_cedula: '900112233-1',
+  nombre_cliente: 'Veterinaria El Potrero',
+  telefono: 3124456789,
+  direccion_entrega: 'Calle 5 # 10-22, Sogamoso',
+  tipo: 'VETERINARIA',
+  estado_activo: 1
+}
+
+>db.movimiento_inventario.find({tipo_mov: "SALIDA", id_cliente: 2})
+
+<{
+  _id: ObjectId('69f8f3b20cbdd61344164d1c'),
+  id_movimiento: 12,
+  id_stock: 7,
+  id_usuario: 4,
+  id_cliente: 2,
+  timestamp_mov: '2026-01-13 10:15:00',
+  cantidad_bultos: 8,
+  tipo_mov: 'SALIDA',
+  motivo: 'Venta — Agroveterinaria Los Andes'
+}
+
+>db.producto.find ({id_categoria: 1, descontinuado:0})
+
+<{
+  _id: ObjectId('69f8f2ee0cbdd61344164c47'),
+  id_producto: 1,
+  id_categoria: 1,
+  nombre_sal_mineralizada: 'Sal Mineralizada 12% — Bulto 50kg (paquetes de 1kg)',
+  peso_bulto_kg: 50,
+  unidad_medida: '1kg',
+  paquetes_por_bulto: 50,
+  descontinuado: 0
+}
+
+{
+  _id: ObjectId('69f8f2ee0cbdd61344164c48'),
+  id_producto: 2,
+  id_categoria: 1,
+  nombre_sal_mineralizada: 'Sal Mineralizada 12% — Bulto 50kg (paquetes de 5kg)',
+  peso_bulto_kg: 50,
+  unidad_medida: '5kg',
+  paquetes_por_bulto: 10,
+  descontinuado: 0
+}
+
+{
+  _id: ObjectId('69f8f2ee0cbdd61344164c49'),
+  id_producto: 3,
+  id_categoria: 1,
+  nombre_sal_mineralizada: 'Sal Mineralizada 12% — Bulto 40kg a Granel',
+  peso_bulto_kg: 40,
+  unidad_medida: 'granel',
+  paquetes_por_bulto: 1,
+  descontinuado: 0
+}
+
+{
+  _id: ObjectId('69f8f2ee0cbdd61344164c4a'),
+  id_producto: 4,
+  id_categoria: 1,
+  nombre_sal_mineralizada: 'Sal Mineralizada 12% — Mochila 10kg',
+  peso_bulto_kg: 10,
+  unidad_medida: 'mochila',
+  paquetes_por_bulto: 1,
+  descontinuado: 0
+}
