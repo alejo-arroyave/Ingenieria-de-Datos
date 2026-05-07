@@ -147,3 +147,25 @@ db.bands.insertMany([
     ]
   }
 ])
+
+db.bands.updateOne(
+  { name: "Bon Jovi" },
+  {
+    $unset: {
+      "albums.$[].dateCreated": ""
+    }
+  }
+)
+ 
+db.bands.updateOne(
+  {
+    name: "Green Day",
+    "albums.title": "Dookie"
+  },
+  {
+    $unset: {
+      "albums.$.songs": ""
+    }
+  }
+)
+ 
